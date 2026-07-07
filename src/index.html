@@ -233,35 +233,102 @@
             </main>
 
             <!-- Help Content -->
-            <main class="content-area" id="help-view" style="display: none; padding: 24px; overflow-y: auto;">
-                <div class="content-header">
-                    <h2>Help & Documentation</h2>
-                </div>
-                <div style="background: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); color: var(--text-primary); line-height: 1.6;">
-                    <h3 style="margin-top: 0;">How to Setup Google Drive Connector</h3>
-                    <p>To use this application, you need to create a Google Cloud Project and obtain a Client ID and Client Secret.</p>
-                    
-                    <ol style="padding-left: 20px; margin-bottom: 24px;">
-                        <li>Go to the <a href="#" id="link-to-gcp" style="color: #0b57d0;">Google Cloud Console</a>.</li>
-                        <li>Create a new project.</li>
-                        <li>Navigate to <strong>APIs & Services > Library</strong> and enable the <strong>Google Drive API</strong>.</li>
-                        <li>Navigate to <strong>APIs & Services > OAuth consent screen</strong>:
-                            <ul style="padding-left: 20px;">
-                                <li>Choose <strong>External</strong> and click Create.</li>
-                                <li>Fill in the required App information fields.</li>
-                                <li>Under <strong>Test users</strong>, add the email addresses of the users who will be testing this app.</li>
+            <main class="content-area" id="help-view" style="display: none; padding: 32px; overflow-y: auto; background: var(--bg-primary);">
+                <div style="max-width: 800px; margin: 0 auto; padding-bottom: 40px;">
+                    <div style="margin-bottom: 32px; text-align: center;">
+                        <span class="material-symbols-outlined" style="font-size: 48px; color: var(--accent-color); margin-bottom: 12px;">integration_instructions</span>
+                        <h2 style="font-size: 32px; margin-bottom: 12px; color: var(--text-primary);">Setup Guide</h2>
+                        <p style="color: var(--text-secondary); font-size: 16px; margin: 0; line-height: 1.6;">Follow these steps to generate a Client ID and Client Secret from Google Cloud.<br>This allows the app to securely connect to your Google Drive.</p>
+                    </div>
+
+                    <!-- Step 1 -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; display: flex; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; box-shadow: 0 4px 10px rgba(26,115,232,0.3);">1</div>
+                        <div style="flex-grow: 1;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                <span class="material-symbols-outlined" style="color: #ea4335;">cloud</span> Create a Google Cloud Project
+                            </h3>
+                            <ul style="margin: 0; padding-left: 0; list-style: none; color: var(--text-secondary); line-height: 1.8; font-size: 15px;">
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Go to the <a href="#" id="link-to-gcp" style="color: var(--accent-color); text-decoration: none; font-weight: 500;">Google Cloud Console</a>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click <strong>Select a project</strong> > <strong>New Project...</strong></span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Enter a project name, then click <strong>Create</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click <strong>Select a project</strong> and choose the project you just created.</span></li>
                             </ul>
-                        </li>
-                        <li>Navigate to <strong>APIs & Services > Credentials</strong>:
-                            <ul style="padding-left: 20px;">
-                                <li>Click <strong>Create Credentials > OAuth client ID</strong>.</li>
-                                <li>Select <strong>Desktop app</strong> (or Web application with redirect URI <code>http://localhost:3000/oauth2callback</code>) as the application type.</li>
-                                <li>Copy your <strong>Client ID</strong> and <strong>Client Secret</strong>.</li>
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; display: flex; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; box-shadow: 0 4px 10px rgba(26,115,232,0.3);">2</div>
+                        <div style="flex-grow: 1;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                <span class="material-symbols-outlined" style="color: #fbbc04;">api</span> Enable Google Drive API
+                            </h3>
+                            <ul style="margin: 0; padding-left: 0; list-style: none; color: var(--text-secondary); line-height: 1.8; font-size: 15px;">
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Open the side menu > Navigate to <strong>APIs & Services</strong> > <strong>Library</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Search for <strong>Google Drive API</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click on it, then click <strong>Enable</strong>.</span></li>
                             </ul>
-                        </li>
-                        <li>Paste them into the <strong>Setup</strong> page in this app and click Save.</li>
-                    </ol>
-                    <p style="color: var(--text-secondary);">Note: As long as the OAuth consent screen is in "Testing" mode, only the email addresses you added as test users will be able to log in successfully.</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; display: flex; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; box-shadow: 0 4px 10px rgba(26,115,232,0.3);">3</div>
+                        <div style="flex-grow: 1;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                <span class="material-symbols-outlined" style="color: #34a853;">shield_person</span> Setup OAuth Consent Screen
+                            </h3>
+                            <ul style="margin: 0; padding-left: 0; list-style: none; color: var(--text-secondary); line-height: 1.8; font-size: 15px;">
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Navigate to <strong>APIs & Services</strong> > <strong>OAuth consent screen</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click <strong>Get Started</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Enter App Name <span style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: monospace;">G Drive Connector</span>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Enter a <strong>support email</strong>, then click <strong>Next</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Select <strong>External</strong>, then click <strong>Next</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Enter a <strong>contact email</strong>, then click <strong>Next</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Enable the <strong>I agree</strong> checkbox, click <strong>Continue</strong>, then <strong>Create</strong>.</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 24px; display: flex; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; box-shadow: 0 4px 10px rgba(26,115,232,0.3);">4</div>
+                        <div style="flex-grow: 1;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                <span class="material-symbols-outlined" style="color: var(--accent-color);">key</span> Generate Credentials
+                            </h3>
+                            <ul style="margin: 0; padding-left: 0; list-style: none; color: var(--text-secondary); line-height: 1.8; font-size: 15px;">
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click <strong>Create OAuth client</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Select Application type: <strong>Desktop app</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Enter App Name <span style="background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: monospace;">G Drive Connector</span>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click <strong>Create</strong>, then click <strong>OK</strong>.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Click on your new <strong>G Drive Connector</strong> client in the list.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>You will now see your <strong style="color: var(--text-primary);">Client ID</strong> and <strong style="color: var(--text-primary);">Client Secret</strong>. Copy and paste them into the <strong>Setup</strong> page of this app!</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; display: flex; gap: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
+                        <div style="flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; background: var(--accent-color); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 18px; box-shadow: 0 4px 10px rgba(26,115,232,0.3);">5</div>
+                        <div style="flex-grow: 1;">
+                            <h3 style="margin: 0 0 16px 0; font-size: 20px; display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                <span class="material-symbols-outlined" style="color: #ea4335;">group_add</span> Add Test Users
+                            </h3>
+                            <ul style="margin: 0; padding-left: 0; list-style: none; color: var(--text-secondary); line-height: 1.8; font-size: 15px;">
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Go to <strong>Audience</strong> from the sidebar in the Google Cloud Console.</span></li>
+                                <li style="display: flex; gap: 12px; margin-bottom: 8px;"><span class="material-symbols-outlined" style="font-size: 18px; margin-top: 4px; color: var(--accent-color);">arrow_right</span> <span>Under <strong>Test users</strong>, add the email addresses of the users who will be testing this app.</span></li>
+                            </ul>
+                            
+                            <div style="background: rgba(234, 67, 53, 0.1); border-left: 4px solid #ea4335; padding: 16px; border-radius: 0 8px 8px 0; margin-top: 20px; display: flex; gap: 12px;">
+                                <span class="material-symbols-outlined" style="color: #ea4335;">error</span>
+                                <div style="color: var(--text-primary); font-size: 14px; line-height: 1.6;">
+                                    <strong>Important Note:</strong> As long as the OAuth consent screen is in "Testing" mode, <em>only</em> the email addresses you explicitly added as test users will be able to log in successfully.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </main>
         </div>

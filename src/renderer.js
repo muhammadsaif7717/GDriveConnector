@@ -306,6 +306,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const grid = trashed ? trashFilesGrid : homeFilesGrid;
         if (!grid) return;
 
+        let refreshIcon = null;
+        if (trashed) {
+            if (refreshTrashBtn) refreshIcon = refreshTrashBtn.querySelector('.material-symbols-outlined');
+        } else {
+            if (refreshHomeBtn) refreshIcon = refreshHomeBtn.querySelector('.material-symbols-outlined');
+        }
+        
+        if (refreshIcon) refreshIcon.classList.add('spinning');
+
         if (!silent) {
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-secondary);">Loading files...</div>';
         }
@@ -324,6 +333,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error loading files:', error);
             grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #ea4335;">An unexpected error occurred.</div>';
+        } finally {
+            if (refreshIcon) refreshIcon.classList.remove('spinning');
         }
     }
 
