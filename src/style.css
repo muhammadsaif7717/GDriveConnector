@@ -456,6 +456,12 @@ input:checked + .slider:before {
     display: none;
 }
 
+.upload-manager-body {
+    background: var(--card-bg);
+    max-height: 350px;
+    overflow-y: auto;
+}
+
 .upload-manager-header {
     background: var(--sidebar-bg);
     padding: 12px 16px;

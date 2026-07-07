@@ -1,6 +1,54 @@
 // renderer.js
 // This file handles all UI interactions and renders data from the main process.
 
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-msg ${type}`;
+    toast.style.background = type === 'error' ? '#ea4335' : 'var(--card-bg)';
+    toast.style.color = type === 'error' ? 'white' : 'var(--text-primary)';
+    toast.style.padding = '12px 24px';
+    toast.style.borderRadius = '8px';
+    toast.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+    toast.style.fontSize = '14px';
+    toast.style.display = 'flex';
+    toast.style.alignItems = 'center';
+    toast.style.gap = '8px';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    toast.style.transition = 'all 0.3s ease';
+    
+    const icon = type === 'error' ? 'error' : 'info';
+    toast.innerHTML = `<span class="material-symbols-outlined" style="font-size: 20px;">${icon}</span> <span>${message}</span>`;
+    
+    container.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Animate out and remove
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+window.addEventListener("unhandledrejection", (e) => {
+    console.error("Unhandled Rejection:", e.reason);
+    showToast(e.reason?.message || "An unexpected network error occurred.", "error");
+});
+
+window.addEventListener("error", (e) => {
+    console.error("Global Error:", e.error);
+    showToast(e.message || "An unexpected error occurred.", "error");
+});
+
 document.addEventListener('DOMContentLoaded', () => {
     // TEST REFRESH
     setTimeout(async () => {
@@ -625,6 +673,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (clearSelectionBtn) clearSelectionBtn.addEventListener('click', clearSelection);
 
+    // Custom Prompt Function
+    function promptAsync(title, defaultValue = '') {
+        return new Promise((resolve) => {
+            const overlay = document.getElementById('custom-prompt-overlay');
+            const titleEl = document.getElementById('custom-prompt-title');
+            const inputEl = document.getElementById('custom-prompt-input');
+            const btnOk = document.getElementById('custom-prompt-ok');
+            const btnCancel = document.getElementById('custom-prompt-cancel');
+            
+            titleEl.textContent = title;
+            inputEl.value = defaultValue;
+            
+            overlay.style.display = 'flex';
+            overlay.classList.remove('hidden');
+            inputEl.focus();
+            
+            const cleanup = () => {
+                overlay.style.display = 'none';
+                overlay.classList.add('hidden');
+                btnOk.removeEventListener('click', onOk);
+                btnCancel.removeEventListener('click', onCancel);
+                inputEl.removeEventListener('keydown', onKey);
+            };
+            
+            const onOk = () => {
+                cleanup();
+                resolve(inputEl.value);
+            };
+            
+            const onCancel = () => {
+                cleanup();
+                resolve(null);
+            };
+            
+            const onKey = (e) => {
+                if (e.key === 'Enter') onOk();
+                if (e.key === 'Escape') onCancel();
+            };
+            
+            btnOk.addEventListener('click', onOk);
+            btnCancel.addEventListener('click', onCancel);
+            inputEl.addEventListener('keydown', onKey);
+        });
+    }
+
     // Action: Rename
     if (actionRename) {
         actionRename.addEventListener('click', async () => {
@@ -633,7 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fileObj = allFilesCache.find(f => f.id === fileId);
             if (!fileObj) return;
 
-            const newName = prompt('Enter new name:', fileObj.name);
+            const newName = await promptAsync('Enter new name:', fileObj.name);
             if (newName && newName !== fileObj.name) {
                 showLoader('Renaming file...');
                 const res = await window.electronAPI.renameFile(fileId, newName);
@@ -1067,15 +1160,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const info = await window.electronAPI.getStorageInfo();
             if (info && info.total) {
-                const percent = (info.used / info.total) * 100;
-                if (sidebarProgressBar) sidebarProgressBar.style.width = `${Math.min(percent, 100)}%`;
-                if (sidebarStorageText) sidebarStorageText.textContent = `${formatBytes(info.used)} of ${formatBytes(info.total)} used`;
-                
-                if (percent > 90 && sidebarProgressBar) {
-                    sidebarProgressBar.style.background = '#ea4335';
-                } else if (sidebarProgressBar) {
-                    sidebarProgressBar.style.background = 'var(--accent-color)';
-                }
+                if (sidebarStorageText) sidebarStorageText.textContent = `${formatBytes(info.total - info.used)} Available`;
             } else {
                 if (sidebarStorageText) sidebarStorageText.textContent = 'Storage info unavailable';
             }
@@ -1175,9 +1260,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousedown', (e) => {
         if (currentView !== 'home' && currentView !== 'trash') return;
         
-        // Ignore if clicking on a file card or interactive elements
+        // Ignore if clicking on a file card, interactive elements, or context menus
         const target = e.target;
-        if (target.closest('.file-card') || target.closest('.sidebar') || target.closest('.top-bar') || target.closest('button')) {
+        if (target.closest('.file-card') || target.closest('.sidebar') || target.closest('.top-bar') || target.closest('button') || target.closest('.material-menu') || target.closest('#custom-context-menu') || target.closest('#empty-space-context-menu')) {
             return;
         }
 
@@ -1254,6 +1339,127 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    // --------------------------------------------------------
+    // Context Menu Logic
+    // --------------------------------------------------------
+    const customContextMenu = document.getElementById('custom-context-menu');
+    const emptySpaceContextMenu = document.getElementById('empty-space-context-menu');
+    
+    const ctxOpen = document.getElementById('ctx-open');
+    const ctxDownload = document.getElementById('ctx-download');
+    const ctxRename = document.getElementById('ctx-rename');
+    const ctxDelete = document.getElementById('ctx-delete');
+    const ctxRestore = document.getElementById('ctx-restore');
+    const ctxDeleteForever = document.getElementById('ctx-delete-forever');
+
+    const ctxEmptyNewFolder = document.getElementById('ctx-empty-new-folder');
+    const ctxEmptyUploadFile = document.getElementById('ctx-empty-upload-file');
+
+    let contextMenuTargetId = null;
+
+    function hideContextMenus() {
+        if (customContextMenu) customContextMenu.classList.add('hidden');
+        if (emptySpaceContextMenu) emptySpaceContextMenu.classList.add('hidden');
+    }
+
+    document.addEventListener('click', hideContextMenus);
+
+    document.addEventListener('contextmenu', (e) => {
+        if (currentView !== 'home' && currentView !== 'trash') return;
+        
+        e.preventDefault();
+        hideContextMenus();
+
+        const card = e.target.closest('.file-card');
+        if (card) {
+            contextMenuTargetId = card.dataset.id;
+            
+            if (!selectedFiles.has(contextMenuTargetId)) {
+                clearSelection();
+                selectedFiles.add(contextMenuTargetId);
+                card.classList.add('selected');
+                updateActionBar();
+            }
+
+            if (currentView === 'home') {
+                if (ctxOpen) ctxOpen.style.display = 'flex';
+                if (ctxDownload) ctxDownload.style.display = 'flex';
+                if (ctxRename) ctxRename.style.display = 'flex';
+                if (ctxDelete) ctxDelete.style.display = 'flex';
+                if (ctxRestore) ctxRestore.style.display = 'none';
+                if (ctxDeleteForever) ctxDeleteForever.style.display = 'none';
+            } else if (currentView === 'trash') {
+                if (ctxOpen) ctxOpen.style.display = 'none';
+                if (ctxDownload) ctxDownload.style.display = 'none';
+                if (ctxRename) ctxRename.style.display = 'none';
+                if (ctxDelete) ctxDelete.style.display = 'none';
+                if (ctxRestore) ctxRestore.style.display = 'flex';
+                if (ctxDeleteForever) ctxDeleteForever.style.display = 'flex';
+            }
+
+            if (customContextMenu) {
+                customContextMenu.classList.remove('hidden');
+                
+                let x = e.pageX;
+                let y = e.pageY;
+                
+                const menuWidth = customContextMenu.offsetWidth || 160;
+                const menuHeight = customContextMenu.offsetHeight || 200;
+                
+                if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+                if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+                
+                customContextMenu.style.left = `${x}px`;
+                customContextMenu.style.top = `${y}px`;
+            }
+        } else if (currentView === 'home') {
+            if (emptySpaceContextMenu) {
+                emptySpaceContextMenu.classList.remove('hidden');
+                
+                let x = e.pageX;
+                let y = e.pageY;
+                
+                const menuWidth = emptySpaceContextMenu.offsetWidth || 200;
+                const menuHeight = emptySpaceContextMenu.offsetHeight || 120;
+                
+                if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+                if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+                
+                emptySpaceContextMenu.style.left = `${x}px`;
+                emptySpaceContextMenu.style.top = `${y}px`;
+            }
+        }
+    });
+
+    if (ctxEmptyNewFolder) ctxEmptyNewFolder.addEventListener('click', async () => {
+        const name = await promptAsync('Enter folder name:');
+        if (name) {
+            createFolder(name);
+        }
+    });
+
+    if (ctxOpen) ctxOpen.addEventListener('click', () => {
+        const id = contextMenuTargetId;
+        const file = allFilesCache.find(x => x.id === id);
+        if (file) {
+            if (file.mimeType === 'application/vnd.google-apps.folder') {
+                currentParentId = file.id;
+                breadcrumbPath.push({ id: file.id, name: file.name });
+                loadFiles(0, currentParentId);
+            } else {
+                window.electronAPI.openFileLocally(file.id, file.name);
+                showUploadManager();
+            }
+        }
+    });
+    if (ctxDownload && actionDownload) ctxDownload.addEventListener('click', () => actionDownload.click());
+    if (ctxRename && actionRename) ctxRename.addEventListener('click', () => actionRename.click());
+    if (ctxDelete && actionTrash) ctxDelete.addEventListener('click', () => actionTrash.click());
+    if (ctxRestore && actionRestore) ctxRestore.addEventListener('click', () => actionRestore.click());
+    if (ctxDeleteForever && actionDeleteForever) ctxDeleteForever.addEventListener('click', () => actionDeleteForever.click());
+
+    if (ctxEmptyUploadFile && newBtn) ctxEmptyUploadFile.addEventListener('click', () => newBtn.click());
 
     // Auto-sync polling every 10 seconds
     setInterval(() => {
