@@ -338,11 +338,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let thumbnailHtml = '';
             if (!isListView) {
-                if (file.hasThumbnail && file.thumbnailLink) {
-                    thumbnailHtml = `<div class="file-thumbnail" style="background-image: url('${file.thumbnailLink}'); background-size: cover; background-position: center; height: 120px; border-radius: 8px 8px 0 0;"></div>`;
+                const thumb = file.thumbnail_link || file.thumbnailLink;
+                if (thumb) {
+                    const uniqueId = `thumb-${file.id}`;
+                    thumbnailHtml = `
+                    <div class="file-thumbnail" style="width: 100%; height: 140px; position: relative; background: var(--bg-secondary); border-bottom: 1px solid var(--border-color);">
+                        <img id="${uniqueId}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.3s;">
+                        <div id="${uniqueId}-fallback" style="display:flex; justify-content:center; align-items:center; width:100%; height:100%; position: absolute; top:0; left:0;">
+                            <span class="material-symbols-outlined" style="font-size: 48px; color: ${iconColor}; animation: pulse 1.5s infinite alternate;">image</span>
+                        </div>
+                    </div>`;
+
+                    // Asynchronously fetch and inject the authorized thumbnail image
+                    if (window.electronAPI.getThumbnail) {
+                        window.electronAPI.getThumbnail(thumb, file.account_id).then(res => {
+                            const img = document.getElementById(uniqueId);
+                            const fallback = document.getElementById(`${uniqueId}-fallback`);
+                            if (img && res && res.success) {
+                                img.src = res.dataUrl;
+                                img.onload = () => {
+                                    img.style.opacity = '1';
+                                    if (fallback) fallback.style.display = 'none';
+                                }
+                            } else if (fallback) {
+                                fallback.innerHTML = `<span class="material-symbols-outlined" style="font-size: 64px; color: ${iconColor};">${icon}</span>`;
+                            }
+                        }).catch(() => {
+                            const fallback = document.getElementById(`${uniqueId}-fallback`);
+                            if (fallback) fallback.innerHTML = `<span class="material-symbols-outlined" style="font-size: 64px; color: ${iconColor};">${icon}</span>`;
+                        });
+                    }
                 } else {
-                    thumbnailHtml = `<div class="file-thumbnail" style="display:flex; justify-content:center; align-items:center; height: 120px; background: var(--bg-secondary); border-radius: 8px 8px 0 0;">
-                        <span class="material-symbols-outlined" style="font-size: 48px; color: ${iconColor};">${icon}</span>
+                    thumbnailHtml = `<div class="file-thumbnail" style="display:flex; justify-content:center; align-items:center; width: 100%; height: 140px; background: var(--hover-bg); border-bottom: 1px solid var(--border-color);">
+                        <span class="material-symbols-outlined" style="font-size: 64px; color: ${iconColor};">${icon}</span>
                     </div>`;
                 }
             }
@@ -359,9 +387,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 card.innerHTML = `
                     ${thumbnailHtml}
-                    <div class="file-info" style="padding: 12px; display:flex; align-items:center;">
-                        <span class="material-symbols-outlined" style="color:${iconColor}; margin-right:8px;">${icon}</span>
-                        <div class="file-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${file.name}</div>
+                    <div class="file-info" style="padding: 12px 16px; display:flex; align-items:center; width: 100%; box-sizing: border-box;">
+                        <span class="material-symbols-outlined" style="color:${iconColor}; margin-right:12px; font-size: 20px;">${icon}</span>
+                        <div class="file-name" style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1; text-align:left; margin-top:0;">${file.name}</div>
                     </div>
                 `;
             }

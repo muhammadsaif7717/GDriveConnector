@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAccounts: () => ipcRenderer.invoke('get-accounts'),
   getStorageBreakdown: () => ipcRenderer.invoke('get-storage-breakdown'),
   deleteAccount: (id) => ipcRenderer.invoke('delete-account', id),
+  getThumbnail: (url, accountId) => ipcRenderer.invoke('get-thumbnail', url, accountId),
   exportData: () => ipcRenderer.invoke('export-data'),
   importData: () => ipcRenderer.invoke('import-data'),
   clearCache: () => ipcRenderer.invoke('clear-cache'),

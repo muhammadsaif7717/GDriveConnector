@@ -70,6 +70,26 @@ ipcMain.handle('get-files', async (event, trashed, parentId = 'root') => {
     }
 });
 
+const https = require('https');
+ipcMain.handle('get-thumbnail', async (event, url, accountId) => {
+    return new Promise((resolve) => {
+        db.get("SELECT access_token FROM accounts WHERE id = ?", [accountId], (err, row) => {
+            if (err || !row || !row.access_token) return resolve({ success: false, error: 'Token not found' });
+            
+            https.get(url, { headers: { Authorization: `Bearer ${row.access_token}` } }, (res) => {
+                if (res.statusCode !== 200) return resolve({ success: false, error: 'Status ' + res.statusCode });
+                const chunks = [];
+                res.on('data', d => chunks.push(d));
+                res.on('end', () => {
+                    const buffer = Buffer.concat(chunks);
+                    const contentType = res.headers['content-type'] || 'image/jpeg';
+                    resolve({ success: true, dataUrl: `data:${contentType};base64,${buffer.toString('base64')}` });
+                });
+            }).on('error', e => resolve({ success: false, error: e.message }));
+        });
+    });
+});
+
 ipcMain.handle('move-to-trash', async (event, id) => {
     try {
         await moveToTrash(id);
