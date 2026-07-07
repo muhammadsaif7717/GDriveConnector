@@ -977,6 +977,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             await window.electronAPI.deleteAccount(acc.id);
                             hideLoader();
                             loadDashboard();
+                            updateSidebarStorage();
                         }
                     });
 
