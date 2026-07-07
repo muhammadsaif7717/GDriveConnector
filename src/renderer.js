@@ -1164,6 +1164,97 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize App
     checkSetup();
 
+    // --------------------------------------------------------
+    // Lasso (Drag) Selection
+    // --------------------------------------------------------
+    const lassoBox = document.getElementById('lasso-box');
+    let isLassoing = false;
+    let lassoStartX = 0;
+    let lassoStartY = 0;
+
+    document.addEventListener('mousedown', (e) => {
+        if (currentView !== 'home' && currentView !== 'trash') return;
+        
+        // Ignore if clicking on a file card or interactive elements
+        const target = e.target;
+        if (target.closest('.file-card') || target.closest('.sidebar') || target.closest('.top-bar') || target.closest('button')) {
+            return;
+        }
+
+        isLassoing = true;
+        lassoStartX = e.pageX;
+        lassoStartY = e.pageY;
+        
+        if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+            clearSelection();
+        }
+
+        if (lassoBox) {
+            lassoBox.style.left = `${lassoStartX}px`;
+            lassoBox.style.top = `${lassoStartY}px`;
+            lassoBox.style.width = '0px';
+            lassoBox.style.height = '0px';
+            lassoBox.classList.remove('hidden');
+            lassoBox.style.display = 'block';
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isLassoing || !lassoBox) return;
+        
+        const currentX = e.pageX;
+        const currentY = e.pageY;
+        
+        const left = Math.min(lassoStartX, currentX);
+        const top = Math.min(lassoStartY, currentY);
+        const width = Math.abs(lassoStartX - currentX);
+        const height = Math.abs(lassoStartY - currentY);
+        
+        lassoBox.style.left = `${left}px`;
+        lassoBox.style.top = `${top}px`;
+        lassoBox.style.width = `${width}px`;
+        lassoBox.style.height = `${height}px`;
+        
+        const lassoRect = lassoBox.getBoundingClientRect();
+        
+        if (width > 5 || height > 5) {
+            const grid = currentView === 'home' ? homeFilesGrid : trashFilesGrid;
+            if (grid) {
+                const cards = grid.querySelectorAll('.file-card');
+                cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    const id = card.dataset.id;
+                    
+                    const intersect = !(
+                        rect.right < lassoRect.left || 
+                        rect.left > lassoRect.right || 
+                        rect.bottom < lassoRect.top || 
+                        rect.top > lassoRect.bottom
+                    );
+                    
+                    if (intersect) {
+                        selectedFiles.add(id);
+                        card.classList.add('selected');
+                    } else if (!e.ctrlKey && !e.metaKey && !e.shiftKey) {
+                        selectedFiles.delete(id);
+                        card.classList.remove('selected');
+                    }
+                });
+                updateActionBar();
+            }
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (isLassoing) {
+            isLassoing = false;
+            if (lassoBox) {
+                lassoBox.classList.add('hidden');
+                lassoBox.style.display = 'none';
+            }
+        }
+    });
+
     // Auto-sync polling every 10 seconds
     setInterval(() => {
         if (currentView === 'home') {
