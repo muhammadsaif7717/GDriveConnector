@@ -135,7 +135,7 @@ async function uploadFile(filePath, onProgress, abortSignal, parentId = 'root') 
         const driveFile = response.data;
         
         await new Promise((resolve) => {
-            db.run(`UPDATE accounts SET used_space = used_space + ? WHERE id = ?`, [fileSize, account.id], resolve);
+            db.run(`UPDATE accounts SET used_space = used_space + ?, app_used_space = app_used_space + ? WHERE id = ?`, [fileSize, fileSize, account.id], resolve);
         });
 
         return {
@@ -315,7 +315,7 @@ async function deletePermanently(id) {
     
     if (file && file.size) {
         await new Promise((res) => {
-            db.run("UPDATE accounts SET used_space = MAX(0, used_space - ?) WHERE id = ?", [file.size, account.id], res);
+            db.run("UPDATE accounts SET used_space = MAX(0, used_space - ?), app_used_space = MAX(0, app_used_space - ?) WHERE id = ?", [file.size, file.size, account.id], res);
         });
     }
     
@@ -448,5 +448,6 @@ module.exports = {
     getFiles, 
     moveToTrash, 
     deletePermanently, 
-    emptyTrash 
+    emptyTrash,
+    ensureAppFolder
 };

@@ -113,12 +113,14 @@ async function getStorageData() {
             
             let total = 0;
             let used = 0;
+            let appUsed = 0;
 
             if (rows.length === 0) {
-                return resolve({ total: 15 * 1024 * 1024 * 1024, used: 0 });
+                return resolve({ total: 15 * 1024 * 1024 * 1024, used: 0, appUsed: 0 });
             }
 
             for (const row of rows) {
+                appUsed += parseInt(row.app_used_space || 0, 10);
                 try {
                     const client = await getOAuth2Client();
                     client.setCredentials({
@@ -143,39 +145,89 @@ async function getStorageData() {
                     used += row.used_space || 0;
                 }
             }
-            resolve({ total, used });
+            resolve({ total, used, appUsed });
+            
+            // Fire-and-forget sync for app_used_space to catch manual uploads
+            setTimeout(() => syncAllAppStorage().catch(e => console.error("Sync error:", e)), 1000);
         });
     });
 }
 
-async function getAccounts() {
-    return new Promise((resolve, reject) => {
+async function syncAllAppStorage() {
+    return new Promise((resolve) => {
         db.all("SELECT * FROM accounts", async (err, rows) => {
-            console.log("getAccounts db.all returned, rows:", rows ? rows.length : 0);
-            if (err) return reject(err);
+            if (err || rows.length === 0) return resolve();
             
-            const updatedRows = [];
             for (const row of rows) {
-                console.log("Processing row:", row.email);
                 try {
-                    console.log("Getting client");
                     const client = await getOAuth2Client();
-                    console.log("Client got");
                     client.setCredentials({
                         access_token: row.access_token,
                         refresh_token: row.refresh_token,
                         expiry_date: row.expiry_date
                     });
                     const drive = google.drive({ version: 'v3', auth: client });
-                    console.log("Fetching quota for", row.email);
+                    
+                    // Get app folder ID
+                    const { ensureAppFolder } = require('./fileOps');
+                    const appFolderId = await ensureAppFolder(drive);
+                    
+                    // Recursively calculate size
+                    const totalSize = await calculateFolderSizeRecursive(drive, appFolderId);
+                    db.run("UPDATE accounts SET app_used_space = ? WHERE id = ?", [totalSize, row.id]);
+                } catch (e) {
+                    console.error("Failed to sync app storage for", row.email, e);
+                }
+            }
+            resolve();
+        });
+    });
+}
+
+async function calculateFolderSizeRecursive(drive, folderId) {
+    let size = 0;
+    let pageToken = null;
+    do {
+        const res = await drive.files.list({
+            q: `'${folderId}' in parents and trashed = false`,
+            fields: 'nextPageToken, files(id, mimeType, size)',
+            pageToken: pageToken,
+            pageSize: 1000
+        });
+        
+        for (const file of res.data.files) {
+            if (file.mimeType === 'application/vnd.google-apps.folder') {
+                size += await calculateFolderSizeRecursive(drive, file.id);
+            } else {
+                size += parseInt(file.size || 0, 10);
+            }
+        }
+        pageToken = res.data.nextPageToken;
+    } while (pageToken);
+    
+    return size;
+}
+async function getAccounts() {
+    return new Promise((resolve, reject) => {
+        db.all("SELECT * FROM accounts", async (err, rows) => {
+            if (err) return reject(err);
+            
+            const updatedRows = [];
+            for (const row of rows) {
+                try {
+                    const client = await getOAuth2Client();
+                    client.setCredentials({
+                        access_token: row.access_token,
+                        refresh_token: row.refresh_token,
+                        expiry_date: row.expiry_date
+                    });
+                    const drive = google.drive({ version: 'v3', auth: client });
                     const res = await drive.about.get({ fields: 'storageQuota' });
-                    console.log("Quota fetched for", row.email);
                     
                     const quota = res.data.storageQuota;
                     row.total_space = parseInt(quota.limit || (15 * 1024 * 1024 * 1024), 10);
                     row.used_space = parseInt(quota.usage || 0, 10);
 
-                    console.log("Updating DB");
                     db.run("UPDATE accounts SET total_space = ?, used_space = ? WHERE id = ?", [row.total_space, row.used_space, row.id]);
                 } catch (e) {
                     console.error("Failed to fetch quota for", row.email, e.message);

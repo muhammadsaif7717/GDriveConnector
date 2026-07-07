@@ -1,6 +1,6 @@
 # ☁️ G Drive Connector (v1.0.0)
 
-* [ ] [ ] 
+* [ ] [ ]
 
 ---
 
@@ -106,4 +106,8 @@ To connect your accounts, you must first supply your own Google Cloud OAuth 2.0 
 
 ## 📄 License
 
-This software is provided as a personal project. Users are free to download and use the compiled application. However, the source code is proprietary and may not be cloned, copied, modified, merged, or published without permission. The author is not responsible for any data loss or system issues. See the `LICENSE` file for full details.
+This application is free to use but remains proprietary. Users are granted permission to use the app's features for free, but are strictly prohibited from customizing, developing, recreating, editing, or updating the app or its source code. 
+
+**Disclaimer of Liability:** The author is not responsible or liable for any permanent deletion of files, system damage, or any other harm or damages that users may face in the future while using this app. Please use it at your own risk. 
+
+See the [LICENSE](LICENSE) file for full details.

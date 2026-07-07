@@ -13,8 +13,14 @@ db.serialize(() => {
         refresh_token TEXT,
         expiry_date INTEGER,
         total_space INTEGER DEFAULT 0,
-        used_space INTEGER DEFAULT 0
+        used_space INTEGER DEFAULT 0,
+        app_used_space INTEGER DEFAULT 0
     )`);
+
+    // Add column if not exists for older installations
+    db.run("ALTER TABLE accounts ADD COLUMN app_used_space INTEGER DEFAULT 0", (err) => {
+        // Ignore error if column already exists
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS settings (
         id INTEGER PRIMARY KEY,

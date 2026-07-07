@@ -50,26 +50,23 @@ window.addEventListener("error", (e) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // TEST REFRESH
-    setTimeout(async () => {
-        try {
-            console.log('TEST REFRESH SETUP INPUTS');
-            const settings = await window.electronAPI.getSettings();
-            console.log('GET SETTINGS RETURNED:', JSON.stringify(settings));
-            if (settings && settings.success && settings.settings) {
-                const setupClientId = document.getElementById('setup-client-id');
-                console.log('CLIENT ID INPUT ELEMENT:', setupClientId);
-                console.log('CLIENT ID INPUT VALUE BEFORE:', setupClientId ? setupClientId.value : 'null');
-                if (setupClientId && settings.settings.client_id) setupClientId.value = settings.settings.client_id;
-                console.log('CLIENT ID INPUT VALUE AFTER:', setupClientId ? setupClientId.value : 'null');
+    // --------------------------------------------------------
+    // --------------------------------------------------------
+    // Setup Page Eye Button Logic
+    // --------------------------------------------------------
+    document.querySelectorAll('.toggle-password').forEach(icon => {
+        icon.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.textContent = 'visibility';
+            } else {
+                input.type = 'password';
+                this.textContent = 'visibility_off';
             }
-        } catch(e) {
-            console.log('TEST REFRESH FAILED', e);
-        }
-    }, 4000);
-    // END TEST REFRESH
-
-    
+        });
+    });
 
     // --------------------------------------------------------
     // DOM Elements
@@ -78,6 +75,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navigation
     const navSetup = document.getElementById('nav-setup');
     const navHelp = document.getElementById('nav-help');
+
+    const globalRefreshBtn = document.getElementById('global-refresh-btn');
+    if (globalRefreshBtn) {
+        globalRefreshBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.reload();
+        });
+    }
+
     const navHome = document.getElementById('nav-home');
     const navDashboard = document.getElementById('nav-dashboard');
     const navTrash = document.getElementById('nav-trash');
@@ -1160,7 +1166,20 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const info = await window.electronAPI.getStorageInfo();
             if (info && info.total) {
-                if (sidebarStorageText) sidebarStorageText.textContent = `${formatBytes(info.total - info.used)} Available`;
+                const appUsed = info.appUsed || 0;
+                const usedOutsideApp = info.used - appUsed;
+                const totalVirtualCapacity = info.total - usedOutsideApp;
+                
+                const percent = (appUsed / totalVirtualCapacity) * 100;
+                if (sidebarProgressBar) sidebarProgressBar.style.width = `${Math.min(percent, 100)}%`;
+                
+                if (percent > 90 && sidebarProgressBar) {
+                    sidebarProgressBar.style.background = '#ea4335';
+                } else if (sidebarProgressBar) {
+                    sidebarProgressBar.style.background = 'var(--accent-color)';
+                }
+                
+                if (sidebarStorageText) sidebarStorageText.innerHTML = `${formatBytes(appUsed)} used from ${formatBytes(info.total - info.used)}`;
             } else {
                 if (sidebarStorageText) sidebarStorageText.textContent = 'Storage info unavailable';
             }

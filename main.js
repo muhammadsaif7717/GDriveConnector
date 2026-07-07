@@ -17,8 +17,7 @@ function createWindow() {
     }
   });
 
-  mainWindow.webContents.on("console-message", (event, level, message, line, sourceId) => { console.log("RENDERER:", message, "AT", line); });
-    mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
+  mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
   
   // mainWindow.webContents.openDevTools();
 }

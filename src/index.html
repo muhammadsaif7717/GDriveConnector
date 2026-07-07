@@ -60,6 +60,11 @@
                         <span class="material-symbols-outlined">delete_outline</span>
                         Trash
                     </a>
+                    <div style="height: 1px; background: var(--border-color); margin: 8px 16px;"></div>
+                    <a href="#" id="global-refresh-btn" style="color: var(--text-primary);">
+                        <span class="material-symbols-outlined">refresh</span>
+                        Refresh
+                    </a>
                 </nav>
                 
                 <div class="theme-toggle-area">
@@ -71,7 +76,10 @@
                 </div>
 
                 <div class="storage-info" style="margin-top: 20px; text-align: center; background: rgba(26,115,232,0.1); padding: 12px; border-radius: 8px;">
-                    <span id="storage-text" style="font-weight: 600; color: var(--accent-color); font-size: 15px;">Loading storage...</span>
+                    <div class="progress-bar" style="height: 6px; background: var(--bg-primary); border-radius: 4px; overflow: hidden; margin-bottom: 8px;">
+                        <div class="progress" style="width: 5%; height: 100%; background: var(--accent-color); transition: width 0.3s ease;"></div>
+                    </div>
+                    <span id="storage-text" style="font-weight: 600; color: var(--accent-color); font-size: 13px;">Loading storage...</span>
                 </div>
             </aside>
 
@@ -212,17 +220,23 @@
                     <h2>Setup Google API Credentials</h2>
                 </div>
                 <div style="background: var(--card-bg); padding: 24px; border-radius: 12px; border: 1px solid var(--border-color); max-width: 600px;">
-                    <p style="color: var(--text-secondary); margin-bottom: 24px;">Enter your Google Cloud Project Client ID and Secret to allow this app to connect to Google Drive. <br><br>If you want to set up your Client ID and Secret, please read our <a href="#" id="link-to-help" style="color: #0b57d0; text-decoration: underline;">Help page</a> for step-by-step details.</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 28px; line-height: 1.5; font-size: 15px;">Enter your Google Cloud Project Client ID and Secret to allow this app to connect to Google Drive. <br><br>If you want to set up your Client ID and Secret, please read our <a href="#" id="link-to-help" style="color: var(--accent-color); text-decoration: none; font-weight: 500;">Help page</a> for step-by-step details.</p>
                     
-                    <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <div style="display: flex; flex-direction: column; gap: 20px;">
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="font-weight: 500; color: var(--text-primary);">Client ID</label>
-                            <input type="text" id="setup-client-id" placeholder="Enter Client ID" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                            <label style="font-weight: 500; color: var(--text-primary); font-size: 14px;">Client ID</label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="password" id="setup-client-id" placeholder="Enter Client ID" style="width: 100%; padding: 12px 40px 12px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-family: monospace; font-size: 13px; box-sizing: border-box;">
+                                <span class="material-symbols-outlined toggle-password" data-target="setup-client-id" style="position: absolute; right: 12px; cursor: pointer; color: var(--text-secondary); font-size: 20px; user-select: none;">visibility_off</span>
+                            </div>
                         </div>
                         
                         <div style="display: flex; flex-direction: column; gap: 8px;">
-                            <label style="font-weight: 500; color: var(--text-primary);">Client Secret</label>
-                            <input type="password" id="setup-client-secret" placeholder="Enter Client Secret" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+                            <label style="font-weight: 500; color: var(--text-primary); font-size: 14px;">Client Secret</label>
+                            <div style="position: relative; display: flex; align-items: center;">
+                                <input type="password" id="setup-client-secret" placeholder="Enter Client Secret" style="width: 100%; padding: 12px 40px 12px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-family: monospace; font-size: 13px; box-sizing: border-box;">
+                                <span class="material-symbols-outlined toggle-password" data-target="setup-client-secret" style="position: absolute; right: 12px; cursor: pointer; color: var(--text-secondary); font-size: 20px; user-select: none;">visibility_off</span>
+                            </div>
                         </div>
                         
                         <button id="save-setup-btn" style="padding: 10px 24px; background: #0b57d0; color: white; border: none; border-radius: 20px; cursor: pointer; align-self: flex-start; margin-top: 8px;">Save Settings</button>
