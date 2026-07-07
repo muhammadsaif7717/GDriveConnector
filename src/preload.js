@@ -19,6 +19,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   clearCache: () => ipcRenderer.invoke('clear-cache'),
   emptyTrash: () => ipcRenderer.invoke('empty-trash'),
   cancelUpload: (id) => ipcRenderer.invoke('cancel-upload', id),
+  onTransferStart: (callback) => ipcRenderer.on('transfer-start', callback),
   onUploadProgress: (callback) => ipcRenderer.on('upload-progress', callback),
   onUploadComplete: (callback) => ipcRenderer.on('upload-complete', callback),
   onUploadError: (callback) => ipcRenderer.on('upload-error', callback),

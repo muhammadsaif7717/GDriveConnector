@@ -128,6 +128,8 @@ ipcMain.handle('upload-file-by-path', async (event, filePath, parentId = 'root')
     const id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
     const task = { id, filePath, name: path.basename(filePath) };
     
+    event.sender.send('transfer-start', { id: task.id, name: task.name, type: 'upload' });
+
     // Process asynchronously
     setTimeout(async () => {
         const controller = new AbortController();
@@ -157,6 +159,10 @@ ipcMain.handle('upload-file', async (event, parentId = 'root') => {
 
     const tasks = filePaths.map(filePath => {
         return { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), filePath, name: path.basename(filePath) };
+    });
+
+    tasks.forEach(task => {
+        event.sender.send('transfer-start', { id: task.id, name: task.name, type: 'upload' });
     });
 
     // Start asynchronously
@@ -221,6 +227,8 @@ ipcMain.handle('download-files', async (event, files) => {
         const taskId = 'dl-' + Date.now().toString() + Math.random().toString(36).substr(2, 5);
         tasks.push({ id: taskId, name: file.name, type: 'download' });
         
+        event.sender.send('transfer-start', { id: taskId, name: file.name, type: 'download' });
+
         setTimeout(async () => {
             const controller = new AbortController();
             activeUploads.set(taskId, controller);
@@ -247,6 +255,8 @@ ipcMain.handle('open-file-locally', async (event, id, fileName) => {
 
     const taskId = Date.now().toString() + Math.random().toString(36).substr(2, 5);
     const task = { id: taskId, name: "Opening: " + fileName };
+
+    event.sender.send('transfer-start', { id: taskId, name: task.name, type: 'download' });
 
     setTimeout(async () => {
         const controller = new AbortController();

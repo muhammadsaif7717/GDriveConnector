@@ -30,7 +30,7 @@ async function getAccountWithSpace(fileSize) {
 }
 
 async function ensureAppFolder(drive) {
-    const query = "name='G Drive Converter' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    const query = "name='G Drive Connector' and mimeType='application/vnd.google-apps.folder' and trashed=false";
     const response = await drive.files.list({
         q: query,
         fields: 'files(id, name)',
@@ -40,7 +40,7 @@ async function ensureAppFolder(drive) {
         return response.data.files[0].id;
     } else {
         const folderMetadata = {
-            name: 'G Drive Converter',
+            name: 'G Drive Connector',
             mimeType: 'application/vnd.google-apps.folder'
         };
         const folder = await drive.files.create({

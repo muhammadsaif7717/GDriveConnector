@@ -708,34 +708,143 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showUploadManager() {
-        if (uploadManager) uploadManager.style.display = 'block';
+        if (uploadManager) {
+            uploadManager.style.display = 'flex';
+            uploadManager.classList.remove('hidden');
+            uploadManager.classList.remove('collapsed');
+            if (uploadManagerToggleBtn) uploadManagerToggleBtn.textContent = 'expand_more';
+        }
     }
 
     // Upload IPC Listeners
+    let activeUploadsSet = new Set();
+    let completedUploadsSet = new Set();
+    const transferMeta = new Map();
+    const uploadManagerTitle = document.getElementById('uploadManagerTitle');
+    const uploadManagerToggleBtn = document.getElementById('uploadManagerToggle');
+    const uploadManagerCloseBtn = document.getElementById('uploadManagerClose');
+
+    function updateUploadManagerUI() {
+        if (!uploadManagerTitle) return;
+        
+        let uploadCount = 0, downloadCount = 0;
+        let activeUploads = 0, activeDownloads = 0;
+
+        activeUploadsSet.forEach(id => {
+            const type = transferMeta.get(id)?.type || 'upload';
+            if (type === 'download') activeDownloads++;
+            else activeUploads++;
+        });
+
+        completedUploadsSet.forEach(id => {
+            const type = transferMeta.get(id)?.type || 'upload';
+            if (type === 'download') downloadCount++;
+            else uploadCount++;
+        });
+
+        const active = activeUploads + activeDownloads;
+        const completed = uploadCount + downloadCount;
+        
+        if (active > 0) {
+            if (activeUploads > 0 && activeDownloads === 0) uploadManagerTitle.textContent = `Uploading ${active} item${active > 1 ? 's' : ''}`;
+            else if (activeDownloads > 0 && activeUploads === 0) uploadManagerTitle.textContent = `Downloading ${active} item${active > 1 ? 's' : ''}`;
+            else uploadManagerTitle.textContent = `Transferring ${active} item${active > 1 ? 's' : ''}`;
+        } else if (completed > 0) {
+            if (uploadCount > 0 && downloadCount === 0) uploadManagerTitle.textContent = `${completed} upload${completed > 1 ? 's' : ''} complete`;
+            else if (downloadCount > 0 && uploadCount === 0) uploadManagerTitle.textContent = `${completed} download${completed > 1 ? 's' : ''} complete`;
+            else uploadManagerTitle.textContent = `${completed} transfer${completed > 1 ? 's' : ''} complete`;
+        }
+        
+        if (uploadManagerCloseBtn) {
+            uploadManagerCloseBtn.style.display = (active === 0 && completed > 0) ? 'inline-block' : 'none';
+        }
+    }
+
+    if (uploadManagerToggleBtn && uploadManager) {
+        uploadManagerToggleBtn.addEventListener('click', () => {
+            uploadManager.classList.toggle('collapsed');
+            uploadManagerToggleBtn.textContent = uploadManager.classList.contains('collapsed') ? 'expand_less' : 'expand_more';
+        });
+    }
+
+    if (uploadManagerCloseBtn && uploadManager) {
+        uploadManagerCloseBtn.addEventListener('click', () => {
+            uploadManager.classList.add('hidden');
+            setTimeout(() => {
+                uploadManager.style.display = 'none';
+                if (uploadList) uploadList.innerHTML = '';
+                activeUploadsSet.clear();
+                completedUploadsSet.clear();
+                transferMeta.clear();
+            }, 300);
+        });
+    }
+
+    function createOrUpdateTransferItem(data) {
+        let item = document.getElementById(`upload-${data.id}`);
+        if (!item && uploadList) {
+            activeUploadsSet.add(data.id);
+            updateUploadManagerUI();
+            
+            const name = data.name || (data.filePath ? data.filePath.split(/[\\/]/).pop() : 'Unknown File');
+            const ext = name.includes('.') ? name.split('.').pop().toLowerCase() : '';
+            let icon = 'insert_drive_file';
+            let iconColor = 'var(--text-secondary)';
+            if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'heic'].includes(ext)) { icon = 'image'; iconColor = '#ea4335'; }
+            else if (['mp4', 'avi', 'mov', 'mkv', 'webm'].includes(ext)) { icon = 'movie'; iconColor = '#ea4335'; }
+            else if (['pdf'].includes(ext)) { icon = 'picture_as_pdf'; iconColor = '#ea4335'; }
+            else if (['doc', 'docx', 'txt'].includes(ext)) { icon = 'description'; iconColor = '#4285f4'; }
+
+            item = document.createElement('div');
+            item.id = `upload-${data.id}`;
+            item.style.padding = '10px 16px';
+            item.style.borderBottom = '1px solid var(--border-color)';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.gap = '12px';
+            item.innerHTML = `
+                <span class="material-symbols-outlined" style="color: ${iconColor}; font-size: 24px; font-variation-settings: 'FILL' 1;">${icon}</span>
+                <span style="flex-grow: 1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size: 14px; color: var(--text-primary);" class="upload-item-name-text">${name}</span>
+                <div class="progress-container" style="width: 24px; height: 24px; position: relative; display: flex; align-items: center; justify-content: center;">
+                    <svg class="progress-ring" width="24" height="24" style="position: absolute; top:0; left:0; pointer-events: none;">
+                        <circle class="progress-ring__circle" stroke="var(--border-color)" stroke-width="3" fill="transparent" r="9" cx="12" cy="12"/>
+                        <circle class="progress-ring__circle--progress" stroke="var(--accent-color)" stroke-width="3" fill="transparent" r="9" cx="12" cy="12" style="stroke-dasharray: 56.55; stroke-dashoffset: 56.55; transition: stroke-dashoffset 0.1s; transform: rotate(-90deg); transform-origin: 50% 50%;"/>
+                    </svg>
+                    <span class="material-symbols-outlined cancel-btn" style="font-size:16px; color: var(--text-secondary); cursor: pointer; position: relative; z-index: 1;" title="Cancel">close</span>
+                </div>
+            `;
+            
+            const cancelBtn = item.querySelector('.cancel-btn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    window.electronAPI.cancelUpload(data.id);
+                });
+            }
+
+            uploadList.appendChild(item);
+            showUploadManager();
+        }
+        return item;
+    }
+
+    if (window.electronAPI.onTransferStart) {
+        window.electronAPI.onTransferStart((event, data) => {
+            transferMeta.set(data.id, data);
+            createOrUpdateTransferItem(data);
+        });
+    }
+
     if (window.electronAPI.onUploadProgress) {
         window.electronAPI.onUploadProgress((event, data) => {
-            let item = document.getElementById(`upload-${data.id}`);
-            if (!item && uploadList) {
-                item = document.createElement('div');
-                item.id = `upload-${data.id}`;
-                item.style.padding = '8px';
-                item.style.borderBottom = '1px solid var(--border-color)';
-                item.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
-                        <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:150px;">${data.name}</span>
-                        <span class="upload-percent">0%</span>
-                    </div>
-                    <div style="height:4px; background:var(--border-color); border-radius:2px; overflow:hidden;">
-                        <div class="upload-progress-bar" style="height:100%; width:0%; background:var(--accent-color); transition:width 0.2s;"></div>
-                    </div>
-                `;
-                uploadList.appendChild(item);
-            }
+            const meta = transferMeta.get(data.id) || {};
+            const mergedData = { ...meta, ...data };
+            let item = createOrUpdateTransferItem(mergedData);
 
             if (item) {
                 const percent = data.progress || 0;
-                item.querySelector('.upload-percent').textContent = `${percent}%`;
-                item.querySelector('.upload-progress-bar').style.width = `${percent}%`;
+                const offset = 56.55 - (percent / 100) * 56.55;
+                const circle = item.querySelector('.progress-ring__circle--progress');
+                if (circle) circle.style.strokeDashoffset = offset;
             }
         });
     }
@@ -744,14 +853,14 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.onUploadComplete((event, data) => {
             let item = document.getElementById(`upload-${data.id}`);
             if (item) {
-                item.querySelector('.upload-percent').textContent = `Done`;
-                item.querySelector('.upload-progress-bar').style.background = '#34a853';
-                setTimeout(() => {
-                    item.remove();
-                    if (uploadList && uploadList.children.length === 0 && uploadManager) {
-                        uploadManager.style.display = 'none';
-                    }
-                }, 3000);
+                activeUploadsSet.delete(data.id);
+                completedUploadsSet.add(data.id);
+                updateUploadManagerUI();
+                
+                const progressContainer = item.querySelector('.progress-container');
+                if (progressContainer) {
+                    progressContainer.innerHTML = `<span class="material-symbols-outlined" style="color: #34a853; font-size: 24px; font-variation-settings: 'FILL' 1;">check_circle</span>`;
+                }
             }
             if (currentView === 'home') {
                 loadFiles(0, currentParentId);
@@ -764,9 +873,19 @@ document.addEventListener('DOMContentLoaded', () => {
         window.electronAPI.onUploadError((event, data) => {
             let item = document.getElementById(`upload-${data.id}`);
             if (item) {
-                item.querySelector('.upload-percent').textContent = `Error`;
-                item.querySelector('.upload-progress-bar').style.background = '#ea4335';
-                item.title = data.error;
+                activeUploadsSet.delete(data.id);
+                updateUploadManagerUI();
+                
+                const progressContainer = item.querySelector('.progress-container');
+                if (progressContainer) {
+                    if (data.error && data.error.includes('aborted')) {
+                        progressContainer.innerHTML = `<span class="material-symbols-outlined" style="color: var(--text-secondary); font-size: 24px;">cancel</span>`;
+                        progressContainer.title = "Canceled";
+                    } else {
+                        progressContainer.innerHTML = `<span class="material-symbols-outlined" style="color: #ea4335; font-size: 24px; font-variation-settings: 'FILL' 1;">error</span>`;
+                        progressContainer.title = data.error;
+                    }
+                }
             }
         });
     }

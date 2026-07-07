@@ -544,6 +544,20 @@ input:checked + .slider:before {
     transition: width 0.2s ease;
 }
 
+.progress-container .cancel-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.progress-container:hover .cancel-btn {
+    opacity: 1;
+}
+.progress-container .progress-ring {
+    transition: opacity 0.2s ease;
+}
+.progress-container:hover .progress-ring {
+    opacity: 0;
+}
+
 .upload-item-action {
     cursor: pointer;
     color: var(--text-color);
