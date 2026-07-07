@@ -360,7 +360,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const sizeStr = isFolder ? '--' : formatBytes(file.size);
 
             const card = document.createElement('div');
-            card.className = 'file-card';
+            card.className = 'file-card fade-in-cascade';
+            card.style.animationDelay = `${index * 0.03}s`;
             card.dataset.id = file.id;
             card.dataset.name = file.name;
             card.dataset.mime = file.mimeType;
@@ -470,8 +471,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     breadcrumbPath.push({ id: file.id, name: file.name });
                     loadFiles(0, currentParentId);
                 } else {
-                    // Optionally open file or download
-                    window.electronAPI.openExternal(`https://drive.google.com/file/d/${file.id}/view`);
+                    window.electronAPI.openFileLocally(file.id, file.name);
+                    showUploadManager();
                 }
             });
 
@@ -674,9 +675,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirm(`Are you sure you want to move ${selectedFiles.size} item(s) to trash?`)) return;
 
             showLoader('Moving to trash...');
-            for (const id of selectedFiles) {
-                await window.electronAPI.moveToTrash(id);
-            }
+            const promises = Array.from(selectedFiles).map(id => window.electronAPI.moveToTrash(id));
+            await Promise.allSettled(promises);
             hideLoader();
             clearSelection();
             loadFiles(0, currentParentId);
@@ -689,9 +689,8 @@ document.addEventListener('DOMContentLoaded', () => {
         actionRestore.addEventListener('click', async () => {
             if (selectedFiles.size === 0) return;
             showLoader('Restoring files...');
-            for (const id of selectedFiles) {
-                await window.electronAPI.restoreFromTrash(id);
-            }
+            const promises = Array.from(selectedFiles).map(id => window.electronAPI.restoreFromTrash(id));
+            await Promise.allSettled(promises);
             hideLoader();
             clearSelection();
             loadFiles(1, 'root');
@@ -706,9 +705,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!confirm(`Are you sure you want to permanently delete ${selectedFiles.size} item(s)? This cannot be undone.`)) return;
             
             showLoader('Deleting files...');
-            for (const id of selectedFiles) {
-                await window.electronAPI.deletePermanently(id);
-            }
+            const promises = Array.from(selectedFiles).map(id => window.electronAPI.deletePermanently(id));
+            await Promise.allSettled(promises);
             hideLoader();
             clearSelection();
             loadFiles(1, 'root');
