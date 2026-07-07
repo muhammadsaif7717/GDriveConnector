@@ -117,9 +117,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentParentId = 'root';
     let breadcrumbPath = [{ id: 'root', name: 'Home' }];
     let selectedFiles = new Set();
+    let lastSelectedIndex = -1;
     let isListView = false;
     let allFilesCache = [];
     let isTrashViewActive = false;
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'a') {
+            // Only select all if we are on a view with files (Home or Trash)
+            if (currentView === 'home' || currentView === 'trash') {
+                e.preventDefault();
+                const cards = document.querySelectorAll('.file-card');
+                if (cards.length > 0) {
+                    cards.forEach(card => {
+                        selectedFiles.add(card.dataset.id);
+                        card.classList.add('selected');
+                    });
+                    updateActionBar();
+                }
+            }
+        }
+    });
 
     // --------------------------------------------------------
     // Helper Functions
@@ -322,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
             gridElement.classList.remove('list-view');
         }
 
-        files.forEach(file => {
+        files.forEach((file, index) => {
             const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
             const icon = getFileIcon(file.mimeType);
             const iconColor = getFileIconColor(file.mimeType);
@@ -396,19 +415,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Click handling for selection
             card.addEventListener('click', (e) => {
-                if (e.shiftKey || e.ctrlKey || e.metaKey) {
+                if (e.shiftKey && lastSelectedIndex !== -1) {
+                    const start = Math.min(lastSelectedIndex, index);
+                    const end = Math.max(lastSelectedIndex, index);
+                    
+                    if (!e.ctrlKey && !e.metaKey) {
+                        document.querySelectorAll('.file-card').forEach(c => c.classList.remove('selected'));
+                        selectedFiles.clear();
+                    }
+                    
+                    for (let i = start; i <= end; i++) {
+                        selectedFiles.add(files[i].id);
+                    }
+                    
+                    document.querySelectorAll('.file-card').forEach((c, idx) => {
+                        if (selectedFiles.has(c.dataset.id)) {
+                            c.classList.add('selected');
+                        }
+                    });
+                } else if (e.ctrlKey || e.metaKey) {
                     if (selectedFiles.has(file.id)) {
                         selectedFiles.delete(file.id);
                         card.classList.remove('selected');
                     } else {
                         selectedFiles.add(file.id);
                         card.classList.add('selected');
+                        lastSelectedIndex = index;
                     }
                 } else {
                     document.querySelectorAll('.file-card').forEach(c => c.classList.remove('selected'));
                     selectedFiles.clear();
                     selectedFiles.add(file.id);
                     card.classList.add('selected');
+                    lastSelectedIndex = index;
                 }
                 updateActionBar();
             });
