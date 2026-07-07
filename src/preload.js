@@ -26,7 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   renameFile: (id, newName) => ipcRenderer.invoke('rename-file', id, newName),
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
-  openExternal: (url) => shell.openExternal(url),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url),
   downloadFiles: (files) => ipcRenderer.invoke('download-files', files),
   openFileLocally: (id, fileName) => ipcRenderer.invoke('open-file-locally', id, fileName),
   startDrag: (id, name) => ipcRenderer.send('ondragstart', id, name)

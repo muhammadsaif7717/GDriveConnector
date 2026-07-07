@@ -30,7 +30,7 @@ async function getAccountWithSpace(fileSize) {
 }
 
 async function ensureAppFolder(drive) {
-    const query = "name='G Drive Connector' and mimeType='application/vnd.google-apps.folder' and trashed=false";
+    const query = "name='G Drive Converter' and mimeType='application/vnd.google-apps.folder' and trashed=false";
     const response = await drive.files.list({
         q: query,
         fields: 'files(id, name)',
@@ -40,7 +40,7 @@ async function ensureAppFolder(drive) {
         return response.data.files[0].id;
     } else {
         const folderMetadata = {
-            name: 'G Drive Connector',
+            name: 'G Drive Converter',
             mimeType: 'application/vnd.google-apps.folder'
         };
         const folder = await drive.files.create({
@@ -171,13 +171,11 @@ async function getFiles(trashed = 0, parentId = 'root') {
             q = ''; 
         }
 
-        if (trashed !== 1 && trashed !== -1) {
-            if (parentId === 'root') {
-                const appFolderId = await ensureAppFolder(drive);
-                q += ` and '${appFolderId}' in parents`;
-            } else {
-                q += ` and '${parentId}' in parents`;
-            }
+        if (parentId === 'root') {
+            const appFolderId = await ensureAppFolder(drive);
+            q = q ? `${q} and '${appFolderId}' in parents` : `'${appFolderId}' in parents`;
+        } else {
+            q = q ? `${q} and '${parentId}' in parents` : `'${parentId}' in parents`;
         }
 
         try {
@@ -335,7 +333,19 @@ async function emptyTrash() {
         });
         const drive = google.drive({ version: 'v3', auth: oauth2Client });
         try {
-            await drive.files.emptyTrash();
+            const appFolderId = await ensureAppFolder(drive);
+            const q = `trashed = true and '${appFolderId}' in parents`;
+            const response = await drive.files.list({
+                q: q,
+                fields: 'files(id)',
+                spaces: 'drive',
+                pageSize: 1000
+            });
+            if (response.data.files) {
+                for (const file of response.data.files) {
+                    await drive.files.delete({ fileId: file.id });
+                }
+            }
         } catch (e) {
             console.error(`Failed to empty trash for account ${account.email}`, e);
         }

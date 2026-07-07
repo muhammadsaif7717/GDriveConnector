@@ -63,10 +63,10 @@ ipcMain.handle('add-account', async (event) => {
 ipcMain.handle('get-files', async (event, trashed, parentId = 'root') => {
     try {
         const files = await getFiles(trashed, parentId);
-        return files;
+        return { success: true, files };
     } catch (err) {
         console.error("Error getting files:", err);
-        return [];
+        return { success: false, error: err.message };
     }
 });
 
@@ -338,9 +338,10 @@ ipcMain.handle('get-storage-breakdown', async () => {
 ipcMain.handle('get-accounts', async () => {
     try {
         const accounts = await getAccounts();
+        console.log("get-accounts returned:", accounts.length, "accounts");
         return accounts;
     } catch (err) {
-        console.error(err);
+        console.error("get-accounts error:", err);
         return [];
     }
 });
@@ -420,6 +421,7 @@ ipcMain.handle('import-data', async (event) => {
                 }
                 
                 if (accounts && accounts.length > 0) {
+                    db.run("DELETE FROM accounts");
                     const stmt = db.prepare(`INSERT OR REPLACE INTO accounts (id, email, access_token, refresh_token, expiry_date, total_space, used_space) VALUES (?, ?, ?, ?, ?, ?, ?)`);
                     for (const acc of accounts) {
                         stmt.run([acc.id, acc.email, acc.access_token, acc.refresh_token, acc.expiry_date, acc.total_space, acc.used_space]);
@@ -436,6 +438,10 @@ ipcMain.handle('import-data', async (event) => {
     } catch (err) {
         return { success: false, error: err.message };
     }
+});
+
+ipcMain.handle('open-external', async (event, url) => {
+    require('electron').shell.openExternal(url);
 });
 
 ipcMain.handle('clear-cache', async () => {

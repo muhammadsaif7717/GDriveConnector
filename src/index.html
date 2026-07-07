@@ -242,7 +242,7 @@
                     <p>To use this application, you need to create a Google Cloud Project and obtain a Client ID and Client Secret.</p>
                     
                     <ol style="padding-left: 20px; margin-bottom: 24px;">
-                        <li>Go to the <a href="#" onclick="window.electronAPI.openExternal('https://console.cloud.google.com/')" style="color: #0b57d0;">Google Cloud Console</a>.</li>
+                        <li>Go to the <a href="#" id="link-to-gcp" style="color: #0b57d0;">Google Cloud Console</a>.</li>
                         <li>Create a new project.</li>
                         <li>Navigate to <strong>APIs & Services > Library</strong> and enable the <strong>Google Drive API</strong>.</li>
                         <li>Navigate to <strong>APIs & Services > OAuth consent screen</strong>:
@@ -292,7 +292,7 @@
     <!-- Upload Manager Dialog -->
     <div class="upload-manager hidden" id="uploadManager">
         <div class="upload-manager-header" id="uploadManagerHeader">
-            <span id="uploadManagerTitle">Uploading...</span>
+            <span id="uploadManagerTitle">File Transfers</span>
             <div>
                 <span class="material-symbols-outlined upload-manager-toggle" id="uploadManagerToggle">expand_more</span>
                 <span class="material-symbols-outlined upload-manager-close" id="uploadManagerClose" style="display:none;">close</span>

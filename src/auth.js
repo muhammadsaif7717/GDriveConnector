@@ -151,24 +151,31 @@ async function getStorageData() {
 async function getAccounts() {
     return new Promise((resolve, reject) => {
         db.all("SELECT * FROM accounts", async (err, rows) => {
+            console.log("getAccounts db.all returned, rows:", rows ? rows.length : 0);
             if (err) return reject(err);
             
             const updatedRows = [];
             for (const row of rows) {
+                console.log("Processing row:", row.email);
                 try {
+                    console.log("Getting client");
                     const client = await getOAuth2Client();
+                    console.log("Client got");
                     client.setCredentials({
                         access_token: row.access_token,
                         refresh_token: row.refresh_token,
                         expiry_date: row.expiry_date
                     });
                     const drive = google.drive({ version: 'v3', auth: client });
+                    console.log("Fetching quota for", row.email);
                     const res = await drive.about.get({ fields: 'storageQuota' });
+                    console.log("Quota fetched for", row.email);
                     
                     const quota = res.data.storageQuota;
                     row.total_space = parseInt(quota.limit || (15 * 1024 * 1024 * 1024), 10);
                     row.used_space = parseInt(quota.usage || 0, 10);
 
+                    console.log("Updating DB");
                     db.run("UPDATE accounts SET total_space = ?, used_space = ? WHERE id = ?", [row.total_space, row.used_space, row.id]);
                 } catch (e) {
                     console.error("Failed to fetch quota for", row.email, e.message);
