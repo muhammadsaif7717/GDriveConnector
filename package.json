@@ -46,7 +46,14 @@
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "linux": {
-      "target": "AppImage",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "build/icon.png"
     }
   },
