@@ -80,6 +80,15 @@ Simply download the `.dmg` file from Releases, open it, and drag the app into yo
 
 Download the `.exe` installer from the GitHub Releases page. Double-click the installer and follow the on-screen instructions to install the application.
 
+**Troubleshooting "Missing Shortcut" Error (Windows Defender)**
+Since this app is not signed with a paid certificate, Windows Defender or other antivirus software might falsely flag and remove the executable immediately after installation, resulting in a "Missing Shortcut" error when trying to open the app.
+
+To resolve this:
+1. Open **Windows Security** > **Virus & threat protection** > **Protection history**.
+2. Look for the recently blocked `G Drive Connector.exe` file and select **Allow on device** or **Restore**.
+3. If it's not in the history, uninstall the app, temporarily disable **Real-time protection**, and reinstall the app.
+4. Once installed and working, add the installation folder (usually `%localappdata%\Programs\G Drive Connector`) to your Windows Security **Exclusions** list before turning Real-time protection back on.
+
 ### 🐧 Linux
 
 Download the `.AppImage` file from the GitHub Releases page.
